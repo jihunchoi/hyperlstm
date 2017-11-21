@@ -106,7 +106,7 @@ def train(args):
         logging.info(f'Epoch {epoch}: Valid BPC = {valid_bpc:.6f}')
         if valid_loss < best_valid_loss:
             best_valid_loss = valid_loss
-            model_filename = f'{epoch:02d}-{valid_bpc:.6f}.pt'
+            model_filename = f'{epoch:03d}-{valid_bpc:.6f}.pt'
             model_path = os.path.join(args.save_dir, model_filename)
             torch.save(model.state_dict(), model_path)
             logging.info('Saved the new best checkpoint')
@@ -133,7 +133,7 @@ def main():
                         'hyper_hidden_size': args.hyper_hidden_size,
                         'hyper_embedding_size': args.hyper_embedding_size,
                         'use_layer_norm': args.use_layer_norm,
-                        'dropout': args.dropout_prob},
+                        'dropout_prob': args.dropout_prob},
               'train': {'bptt_len': args.bptt_len,
                         'batch_size': args.batch_size,}}
     pprint(config)
@@ -141,6 +141,11 @@ def main():
     os.makedirs(args.save_dir)
     with open(os.path.join(args.save_dir, 'config.yml'), 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
+
+    file_log_handler = logging.FileHandler(
+        os.path.join(args.save_dir, 'train.log'))
+    file_log_handler.setFormatter(log_formatter)
+    logger.addHandler(file_log_handler)
 
     train(args)
 

@@ -20,6 +20,7 @@ class PTBModel(nn.Module):
             use_layer_norm=use_layer_norm, dropout_prob=dropout_prob)
         self.output_proj = nn.Linear(in_features=hidden_size,
                                      out_features=num_chars)
+        self.dropout = nn.Dropout(dropout_prob)
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -31,11 +32,13 @@ class PTBModel(nn.Module):
         inputs_emb = self.char_embedding(inputs)
         max_length = inputs.size(0)
 
+        inputs_emb = self.dropout(inputs_emb)
         rnn_outputs = []
         for t in range(max_length):
             output, state, hyper_state = self.hyperlstm_cell(
                 x=inputs_emb[t], state=state, hyper_state=hyper_state)
             rnn_outputs.append(output)
         rnn_outputs = torch.stack(rnn_outputs, dim=0)
+        rnn_outputs = self.dropout(rnn_outputs)
         logits = self.output_proj(rnn_outputs)
         return logits, state, hyper_state
