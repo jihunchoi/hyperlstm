@@ -103,7 +103,7 @@ class LSTMCell(nn.Module):
         if self.use_layer_norm:
             i, f, g, o = self.ln_ifgo(i, f, g, o)
         f = f + 1
-        new_c = c*f.sigmoid() * i.sigmoid()*g.tanh()
+        new_c = c*f.sigmoid() + i.sigmoid()*g.tanh()
         if self.use_layer_norm:
             new_c = self.ln_c(new_c)
         new_h = new_c.tanh() * o.sigmoid()
