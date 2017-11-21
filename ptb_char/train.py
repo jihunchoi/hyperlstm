@@ -101,7 +101,7 @@ def train(args):
         valid_loss = valid_loss_sum / valid_loss_denom
         valid_bpc = valid_loss / np.log(2)
         summary_writer.add_scalar(
-            tag='valid_bpc', scalar_value=valid_loss, global_step=global_step)
+            tag='valid_bpc', scalar_value=valid_bpc, global_step=global_step)
         logging.info(f'Epoch {epoch}: Valid Loss = {valid_loss:.6f}')
         logging.info(f'Epoch {epoch}: Valid BPC = {valid_bpc:.6f}')
         if valid_loss < best_valid_loss:
