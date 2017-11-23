@@ -71,17 +71,20 @@ class ParallelLayerNorm(nn.Module):
 
 class LSTMCell(nn.Module):
 
-    def __init__(self, input_size, hidden_size, use_layer_norm):
+    def __init__(self, input_size, hidden_size, use_layer_norm,
+                 dropout_prob=0):
         super().__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.use_layer_norm = use_layer_norm
+        self.dropout_prob = dropout_prob
 
         self.linear_ih = nn.Linear(in_features=input_size,
                                    out_features=4 * hidden_size)
         self.linear_hh = nn.Linear(in_features=hidden_size,
                                    out_features=4 * hidden_size,
                                    bias=False)
+        self.dropout = nn.Dropout(dropout_prob)
         if use_layer_norm:
             self.ln_ifgo = ParallelLayerNorm(num_inputs=4,
                                              num_features=hidden_size)
@@ -97,13 +100,18 @@ class LSTMCell(nn.Module):
             self.ln_c.reset_parameters()
 
     def forward(self, x, state):
+        if state is None:
+            batch_size = x.size(0)
+            zero_state = Variable(
+                x.data.new(batch_size, self.hidden_size).zero_())
+            state = (zero_state, zero_state)
         h, c = state
         lstm_vector = self.linear_ih(x) + self.linear_hh(h)
         i, f, g, o = lstm_vector.chunk(chunks=4, dim=1)
         if self.use_layer_norm:
             i, f, g, o = self.ln_ifgo(i, f, g, o)
         f = f + 1
-        new_c = c*f.sigmoid() + i.sigmoid()*g.tanh()
+        new_c = c*f.sigmoid() + i.sigmoid()*self.dropout(g.tanh())
         if self.use_layer_norm:
             new_c = self.ln_c(new_c)
         new_h = new_c.tanh() * o.sigmoid()
@@ -229,11 +237,6 @@ class HyperLSTMCell(nn.Module):
             zero_state = Variable(
                 x.data.new(batch_size, self.hidden_size).zero_())
             state = (zero_state, zero_state)
-        if hyper_state is None:
-            batch_size = x.size(0)
-            zero_state = Variable(
-                x.data.new(batch_size, self.hyper_hidden_size).zero_())
-            hyper_state = (zero_state, zero_state)
 
         h, c = state
 
@@ -265,8 +268,8 @@ class HyperLSTMCell(nn.Module):
         ob = ob + self.compute_hyper_vector(hyper_h=new_hyper_h, name='ob')
 
         i = ix + ih + ib
-        g = gx + gh + gb
         f = fx + fh + fb + 1  # Set the initial forget bias to 1.
+        g = gx + gh + gb
         o = ox + oh + ob
 
         if self.use_layer_norm:

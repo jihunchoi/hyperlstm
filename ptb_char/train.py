@@ -41,9 +41,11 @@ def train(args):
         datasets=(train_dataset, valid_dataset), batch_size=args.batch_size,
         bptt_len=args.bptt_len, device=args.gpu)
     train_loader.repeat = False
-    valid_loader.batch_size = 10
+    valid_loader.bptt_len = 2000
+    valid_loader.batch_size = 20
 
-    model = PTBModel(num_chars=len(text_field.vocab),
+    model = PTBModel(rnn_type=args.rnn_type,
+                     num_chars=len(text_field.vocab),
                      input_size=args.input_size,
                      hidden_size=args.hidden_size,
                      hyper_hidden_size=args.hyper_hidden_size,
@@ -79,7 +81,8 @@ def train(args):
             optimizer.step()
 
             state = detach_state(state)
-            hyper_state = detach_state(hyper_state)
+            if hyper_state is not None:
+                hyper_state = detach_state(hyper_state)
             global_step += 1
             summary_writer.add_scalar(
                 tag='train_loss', scalar_value=train_loss.data[0],
@@ -115,6 +118,8 @@ def train(args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', default='data/ptb_char')
+    parser.add_argument('--rnn-type', default='hyperlstm',
+                        choices=['hyperlstm', 'lstm'])
     parser.add_argument('--save-dir', required=True)
     parser.add_argument('--input-size', default=49, type=int)
     parser.add_argument('--hidden-size', default=1000, type=int)
@@ -128,7 +133,8 @@ def main():
     parser.add_argument('--max-epoch', default=200, type=int)
     args = parser.parse_args()
 
-    config = {'model': {'input_size': args.input_size,
+    config = {'model': {'rnn_type': args.rnn_type,
+                        'input_size': args.input_size,
                         'hidden_size': args.hidden_size,
                         'hyper_hidden_size': args.hyper_hidden_size,
                         'hyper_embedding_size': args.hyper_embedding_size,

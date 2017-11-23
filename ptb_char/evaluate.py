@@ -30,7 +30,7 @@ def main():
     text_field.build_vocab(train_dataset)
 
     test_loader = data.BPTTIterator(
-        dataset=test_dataset, batch_size=1, bptt_len=100, train=False,
+        dataset=test_dataset, batch_size=1, bptt_len=2000, train=False,
         device=args.gpu)
 
     model = PTBModel(num_chars=len(text_field.vocab), **config['model'])
