@@ -40,10 +40,10 @@ class PTBModel(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
-        init.xavier_uniform(self.char_embedding.weight.data)
+        init.xavier_uniform_(self.char_embedding.weight.data)
         self.rnn_cell.reset_parameters()
-        init.xavier_uniform(self.output_proj.weight.data)
-        init.constant(self.output_proj.bias.data, val=0)
+        init.xavier_uniform_(self.output_proj.weight.data)
+        init.constant_(self.output_proj.bias.data, val=0)
 
     def forward(self, inputs, state, hyper_state=None):
         inputs_emb = self.char_embedding(inputs)
