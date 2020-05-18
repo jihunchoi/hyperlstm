@@ -21,8 +21,8 @@ class LayerNorm(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
-        init.constant(self.gamma.data, val=1)
-        init.constant(self.beta.data, val=0)
+        init.constant_(self.gamma.data, val=1)
+        init.constant_(self.beta.data, val=0)
 
     def forward(self, input):
         mean = input.mean(dim=-1, keepdim=True)
@@ -49,8 +49,8 @@ class ParallelLayerNorm(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
-        init.constant(self.gamma.data, val=1)
-        init.constant(self.beta.data, val=0)
+        init.constant_(self.gamma.data, val=1)
+        init.constant_(self.beta.data, val=0)
 
     def forward(self, *inputs):
         """
@@ -92,9 +92,9 @@ class LSTMCell(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
-        init.xavier_uniform(self.linear_ih.weight.data)
-        init.constant(self.linear_ih.bias.data, val=0)
-        init.orthogonal(self.linear_hh.weight.data)
+        init.xavier_uniform_(self.linear_ih.weight.data)
+        init.constant_(self.linear_ih.bias.data, val=0)
+        init.orthogonal_(self.linear_hh.weight.data)
         if self.use_layer_norm:
             self.ln_ifgo.reset_parameters()
             self.ln_c.reset_parameters()
@@ -183,26 +183,26 @@ class HyperLSTMCell(nn.Module):
             proj_h = getattr(self, f'hyper_proj_{y}h')
             proj_x = getattr(self, f'hyper_proj_{y}x')
             proj_b = getattr(self, f'hyper_proj_{y}b')
-            init.constant(proj_h.weight.data, val=0)
-            init.constant(proj_h.bias.data, val=1)
-            init.constant(proj_x.weight.data, val=0)
-            init.constant(proj_x.bias.data, val=1)
-            init.normal(proj_b.weight.data, mean=0, std=0.01)
+            init.constant_(proj_h.weight.data, val=0)
+            init.constant_(proj_h.bias.data, val=1)
+            init.constant_(proj_x.weight.data, val=0)
+            init.constant_(proj_x.bias.data, val=1)
+            init.normal_(proj_b.weight.data, mean=0, std=0.01)
         # Hyper LSTM: Scaling
         for y in ('i', 'g', 'f', 'o'):
             scale_h = getattr(self, f'hyper_scale_{y}h')
             scale_x = getattr(self, f'hyper_scale_{y}x')
             scale_b = getattr(self, f'hyper_scale_{y}b')
-            init.constant(scale_h.weight.data,
+            init.constant_(scale_h.weight.data,
                           val=0.1 / self.hyper_embedding_size)
-            init.constant(scale_x.weight.data,
+            init.constant_(scale_x.weight.data,
                           val=0.1 / self.hyper_embedding_size)
-            init.constant(scale_b.weight.data, val=0)
+            init.constant_(scale_b.weight.data, val=0)
 
         # Main LSTM
-        init.xavier_uniform(self.linear_ih.weight.data)
-        init.orthogonal(self.linear_hh.weight.data)
-        init.constant(self.bias.data, val=0)
+        init.xavier_uniform_(self.linear_ih.weight.data)
+        init.orthogonal_(self.linear_hh.weight.data)
+        init.constant_(self.bias.data, val=0)
 
         # LayerNorm
         if self.use_layer_norm:
